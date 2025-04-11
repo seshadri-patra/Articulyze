@@ -37,7 +37,7 @@ export default function Footer() {
           <ul className="space-y-1">
             <li>
               👾 Created by{" "}
-              <span className="text-white font-medium">Team Bit-By-Bit</span>
+              <span className="text-white font-medium">Team Bit-By-It</span>
             </li>
             <li>🛠️ 100% Open Source</li>
             <li>📍 Version 1.0.0</li>
@@ -47,7 +47,7 @@ export default function Footer() {
 
       <div className="mt-8 text-xs text-gray-600 text-center">
         © {new Date().getFullYear()} Articulyze. Made with ☕ by{" "}
-        <span className="font-semibold text-white">Team Bit-By-Bit</span>
+        <span className="font-semibold text-white">Team Bit-By-t</span>
       </div>
     </motion.footer>
   );

@@ -21,8 +21,6 @@ const Slider = React.forwardRef<
       {/* Active range (filled part) */}
       <SliderPrimitive.Range className="absolute h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all" />
     </SliderPrimitive.Track>
-
-    {/* Draggable thumb */}
     <SliderPrimitive.Thumb
       className="block h-5 w-5 rounded-full border border-white bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg ring-1 ring-white/20 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:ring-offset-2"
     />

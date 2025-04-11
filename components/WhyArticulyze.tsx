@@ -67,7 +67,6 @@ export default function WhyArticulyze() {
             transition={{ delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="relative group p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
-            {/* Glow effect */}
             <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 blur-lg rounded-xl transition-all duration-500" />
 
             <div className="relative z-10">

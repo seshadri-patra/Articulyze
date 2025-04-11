@@ -44,6 +44,14 @@ export default function LandingPage() {
 
   const sections = [
     {
+      title: "Login / Signup",
+      description: "Access your Articulyze dashboard with a secure account.",
+      href: "/auth",
+      icon: "🔐",
+      bg: "from-emerald-400/20 to-emerald-600/20",
+      hoverBg: "from-emerald-400/40 to-emerald-600/40",
+    },
+    {
       title: "Practice Speaking",
       description: "Get real-time AI feedback on delivery, tone, and eye contact.",
       href: "/practice",
@@ -68,6 +76,7 @@ export default function LandingPage() {
       hoverBg: "from-amber-400/40 to-orange-500/40",
     },
   ];
+  
 
   return (
     <motion.main
