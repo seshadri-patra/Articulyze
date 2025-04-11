@@ -7,7 +7,7 @@ import { NavigationBar } from "@/components/navigation-bar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SocratEase - Communication Coach",
+  title: "Articulyze - Communication Coach",
   description: "AI-powered platform for improving communication skills",
 };
 

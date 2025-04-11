@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { motion } from "framer-motion";
 
 interface EmotionEntry {
   emotion: string;
@@ -168,64 +169,68 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <main className="container py-12 space-y-10">
-      <div className="text-center space-y-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">Your Communication Dashboard</h1>
+    <main className="container py-12 space-y-12">
+      <div className="text-center space-y-3">
+        <motion.h1
+          className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-violet-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          Your Communication Dashboard
+        </motion.h1>
         <p className="text-muted-foreground text-sm">
-          Personalized analytics powered by <span className="text-primary font-semibold">Articulyze</span>
+          Personalized insights powered by <span className="font-semibold text-white">Articulyze</span>
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-white/80 backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-center text-lg font-semibold flex justify-center items-center gap-2">
-              Practice Sessions 📊
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="text-3xl font-bold">{analytics.totalSessions}</div>
-            <p className="text-muted-foreground text-sm">Total recorded sessions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-center text-lg font-semibold flex justify-center items-center gap-2">
-              Total Time ⏱️
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="text-3xl font-bold">{formatDuration(analytics.totalDuration)}</div>
-            <p className="text-muted-foreground text-sm">Time invested in practice</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-center text-lg font-semibold flex justify-center items-center gap-2">
-              Flow Score 🌊
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="text-3xl font-bold">{analytics.averageLogicalFlow.toFixed(1)}%</div>
-            <p className="text-muted-foreground text-sm">Speech coherence</p>
-          </CardContent>
-        </Card>
+        {[
+          {
+            title: "Practice Sessions 📊",
+            value: analytics.totalSessions,
+            subtitle: "Total recorded sessions",
+          },
+          {
+            title: "Total Time ⏱️",
+            value: formatDuration(analytics.totalDuration),
+            subtitle: "Time invested in practice",
+          },
+          {
+            title: "Flow Score 🌊",
+            value: `${analytics.averageLogicalFlow.toFixed(1)}%`,
+            subtitle: "Speech coherence",
+          },
+        ].map((card, idx) => (
+          <motion.div
+            key={card.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1, duration: 0.6 }}
+          >
+            <Card className="bg-gradient-to-br from-[#1f2937]/60 to-[#111827]/80 border border-white/10 text-white shadow-lg hover:shadow-xl transition">
+              <CardHeader>
+                <CardTitle className="text-center text-lg font-semibold">{card.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="text-3xl font-bold">{card.value}</div>
+                <p className="text-sm text-muted-foreground">{card.subtitle}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Emotions */}
-        <Card className="bg-white/80 backdrop-blur-md">
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
           <CardHeader>
-            <CardTitle className="flex justify-center items-center gap-2">
-              Emotional Expression 😊
-            </CardTitle>
+            <CardTitle className="flex justify-center gap-2">Emotional Expression 😊</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {analytics.averageEmotions.map((emotion) => (
               <div key={emotion.emotion} className="space-y-1.5">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm font-medium">
                   <span className="capitalize">{emotion.emotion}</span>
                   <span>{emotion.percentage.toFixed(1)}%</span>
                 </div>
@@ -235,12 +240,10 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Gaze */}
-        <Card className="bg-white/80 backdrop-blur-md">
+        {/* Gaze Patterns */}
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
           <CardHeader>
-            <CardTitle className="flex justify-center items-center gap-2">
-              Gaze Patterns 👀
-            </CardTitle>
+            <CardTitle className="flex justify-center gap-2">Gaze Patterns 👀</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -255,12 +258,10 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Radial */}
-        <Card className="bg-white/80 backdrop-blur-md">
+        {/* Radial Score */}
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
           <CardHeader>
-            <CardTitle className="flex justify-center items-center gap-2">
-              Speech Quality 🎯
-            </CardTitle>
+            <CardTitle className="flex justify-center gap-2">Speech Quality 🎯</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -296,31 +297,36 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Insights */}
-        <Card className="bg-white/80 backdrop-blur-md">
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
           <CardHeader>
-            <CardTitle className="flex justify-center items-center gap-2">
-              Insights 💡
-            </CardTitle>
+            <CardTitle className="flex justify-center gap-2">Insights 💡</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <h3 className="font-semibold mb-1">Emotional Range</h3>
-              <p className="text-muted-foreground">
-                You're showing a healthy mix of emotions — try to improve the pacing between transitions.
-              </p>
-            </div>
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <h3 className="font-semibold mb-1">Gaze Engagement</h3>
-              <p className="text-muted-foreground">
-                Try distributing your gaze evenly and confidently — aim for natural movement.
-              </p>
-            </div>
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <h3 className="font-semibold mb-1">Logical Flow</h3>
-              <p className="text-muted-foreground">
-                Solid coherence! Focus on smooth transitions to elevate your storytelling.
-              </p>
-            </div>
+            {[
+              {
+                title: "Emotional Range",
+                message:
+                  "You're showing a healthy mix of emotions — try to improve the pacing between transitions.",
+              },
+              {
+                title: "Gaze Engagement",
+                message:
+                  "Try distributing your gaze evenly and confidently — aim for natural movement.",
+              },
+              {
+                title: "Logical Flow",
+                message:
+                  "Solid coherence! Focus on smooth transitions to elevate your storytelling.",
+              },
+            ].map((insight) => (
+              <div
+                key={insight.title}
+                className="p-4 bg-primary/10 rounded-lg border border-white/10"
+              >
+                <h3 className="font-semibold mb-1">{insight.title}</h3>
+                <p className="text-muted-foreground">{insight.message}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
