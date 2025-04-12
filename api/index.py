@@ -14,18 +14,18 @@ from pyneuphonic import Neuphonic, save_audio, TTSConfig
 import io
 from dotenv import load_dotenv
 import traceback
-import whisper  # Add import for Whisper
+import whisper  
 import numpy as np
 import base64
 from PIL import Image
 from deepface import DeepFace
-import subprocess  # Add at the top with other imports
+import subprocess  
 import re
 from itertools import tee
-# import t
+
 import pickle as pkl
 import json
-# Debug information about Python environment
+
 print("Python executable:", sys.executable)
 print("Python version:", sys.version)
 print("PYTHONPATH:", sys.path)
@@ -58,7 +58,7 @@ FILLER_WORDS = [
     "as it were", "kind of", "sort of", "in a way", "that is", "as a matter of fact", 
     "in fact", "like i said", "more or less", "i don't know", "basically speaking", 
     "for sure", "you could say", "the thing is", "it s like", "put it another way", 
-    "at least", "as such", "well you know", "i would say", "truth be told", "yeah", "and yeah",
+    "at least", "as such", "well you know", "i would say", "truth be told", "yeah", "and yeah", "um",
     "um yeah", "um no", "um right", "like literally", "to", "erm", "let s see", "hm", "maybe",
     "maybe like", "really"
 ]
