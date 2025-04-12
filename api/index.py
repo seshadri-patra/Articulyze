@@ -60,7 +60,7 @@ FILLER_WORDS = [
     "for sure", "you could say", "the thing is", "it s like", "put it another way", 
     "at least", "as such", "well you know", "i would say", "truth be told", "yeah", "and yeah", "um",
     "um yeah", "um no", "um right", "like literally", "to", "erm", "let s see", "hm", "maybe",
-    "maybe like", "really"
+    "maybe like", "really", "similarly"
 ]
 
 def ngrams(words, n):
