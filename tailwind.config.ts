@@ -8,7 +8,6 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
-  prefix: "",
   theme: {
     container: {
       center: true,
@@ -74,7 +73,11 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/forms"), // Optional for better form control styling
+    require("@tailwindcss/typography"), // Optional for nice PDF print typography
+  ],
 };
 
 export default config;

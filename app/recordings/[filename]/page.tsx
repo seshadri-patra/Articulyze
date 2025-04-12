@@ -11,7 +11,7 @@ import type { Props as LabelProps } from "recharts/types/component/Label";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-
+import InterviewReportTemplate from "@/components/InterviewReportTemplate";
 interface TTRAnalysis {
   ttr: number;
   unique_words: number;
@@ -737,18 +737,39 @@ export default function RecordingPage() {
         </CardContent>
       </Card>
 
-      {/* Enhanced Speech Analysis */}
-      {transcription && analysis && recordingAnalysis && audioFilename && (
-        <div className="w-full flex justify-center mb-8">
-          <SpeechFeedback
-            analysis={analysis}
-            recordingAnalysis={recordingAnalysis}
-            audioUrl={
-              enhancedAudio || `http://localhost:5328/uploads/${audioFilename}`
-            }
-          />
-        </div>
-      )}
+{/* Enhanced Speech Analysis */}
+{transcription && analysis && recordingAnalysis && audioFilename && (
+  <>
+    <div className="w-full flex justify-center mb-8">
+      <SpeechFeedback
+        analysis={analysis}
+        recordingAnalysis={recordingAnalysis}
+        audioUrl={
+          enhancedAudio || `http://localhost:5328/uploads/${audioFilename}`
+        }
+      />
+    </div>
+
+    {/* This only appears during print */}
+    <div className="print:block hidden">
+      <InterviewReportTemplate
+        analysis={analysis}
+        recordingAnalysis={recordingAnalysis}
+        transcription={transcription}
+      />
+    </div>
+
+    <div className="flex justify-center no-print">
+      <Button
+        variant="outline"
+        className="text-base font-semibold"
+        onClick={() => window.print()}
+      >
+        🧾 Download Full Report
+      </Button>
+    </div>
+  </>
+)}
 
       {/* The rest of the cards and states, but WITHOUT the separate emotions and gaze card */}
       {audioFilename && (

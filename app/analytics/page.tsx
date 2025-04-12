@@ -9,9 +9,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  PolarRadiusAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -34,37 +31,16 @@ interface SpeechAnalysis {
   filler_percentage: number;
 }
 
-interface AnalyticsAccumulator {
-  totalSessions: number;
-  totalDuration: number;
-  averageEmotions: EmotionEntry[];
-  averageGazeDirections: GazeEntry[];
-  speechMetrics: {
-    vocabularyScores: number[];
-    logicalFlowScores: number[];
-    fillerPercentages: number[];
-  };
-}
-
-interface AggregatedAnalytics {
-  totalSessions: number;
-  totalDuration: number;
-  averageEmotions: EmotionEntry[];
-  averageGazeDirections: GazeEntry[];
-  averageFillerWords: number;
-  averageVocabularyScore: number;
-  averageLogicalFlow: number;
-}
-
 export default function AnalyticsPage() {
-  const [analytics, setAnalytics] = useState<AggregatedAnalytics>({
+  const [analytics, setAnalytics] = useState({
     totalSessions: 0,
     totalDuration: 0,
-    averageEmotions: [],
-    averageGazeDirections: [],
+    averageEmotions: [] as EmotionEntry[],
+    averageGazeDirections: [] as GazeEntry[],
     averageFillerWords: 0,
     averageVocabularyScore: 0,
     averageLogicalFlow: 0,
+    averageSessionDuration: 0,
   });
 
   useEffect(() => {
@@ -72,104 +48,87 @@ export default function AnalyticsPage() {
       key.startsWith("recording_analysis_")
     );
 
-    const aggregated = recordings.reduce<AnalyticsAccumulator>(
-      (acc, key) => {
-        const data = JSON.parse(localStorage.getItem(key) || "{}");
-        if (!data.emotions || !data.gaze) return acc;
+    const accumulator = {
+      totalSessions: 0,
+      totalDuration: 0,
+      emotions: {} as Record<string, { sum: number; count: number }>,
+      gaze: {} as Record<string, number>,
+      vocabScores: [] as number[],
+      flowScores: [] as number[],
+      fillerScores: [] as number[],
+    };
 
-        acc.totalSessions++;
-        acc.totalDuration += data.duration || 0;
+    recordings.forEach((key) => {
+      const data = JSON.parse(localStorage.getItem(key) || "{}");
+      if (!data.emotions || !data.gaze) return;
 
-        data.emotions.forEach((entry: any) => {
-          Object.entries(entry.emotions).forEach(([emotion, value]) => {
-            const existing = acc.averageEmotions.find((e) => e.emotion === emotion);
-            if (existing) {
-              existing.percentage += value as number;
-              existing.count = (existing.count || 1) + 1;
-            } else {
-              acc.averageEmotions.push({ emotion, percentage: value as number, count: 1 });
-            }
-          });
+      accumulator.totalSessions++;
+      accumulator.totalDuration += data.duration || 0;
+
+      // Emotions
+      data.emotions.forEach((entry: any) => {
+        Object.entries(entry.emotions).forEach(([emotion, val]) => {
+          if (!accumulator.emotions[emotion]) {
+            accumulator.emotions[emotion] = { sum: 0, count: 0 };
+          }
+          accumulator.emotions[emotion].sum += val as number;
+          accumulator.emotions[emotion].count++;
         });
+      });
 
-        data.gaze.forEach((entry: any) => {
-          const existing = acc.averageGazeDirections.find((g) => g.direction === entry.direction);
-          if (existing) {
-            existing.percentage += 1;
-          } else {
-            acc.averageGazeDirections.push({ direction: entry.direction, percentage: 1 });
-          }
-        });
+      // Gaze
+      data.gaze.forEach((g: any) => {
+        accumulator.gaze[g.direction] = (accumulator.gaze[g.direction] || 0) + 1;
+      });
 
-        try {
-          const speechKey = `speech_analysis_${key.split("_").pop()}`;
-          const speech = JSON.parse(localStorage.getItem(speechKey) || "{}") as SpeechAnalysis;
+      const id = key.replace("recording_analysis_", "");
+      const speech = JSON.parse(localStorage.getItem(`speech_analysis_${id}`) || "{}") as SpeechAnalysis;
 
-          if (speech.ttr_analysis) {
-            acc.speechMetrics.vocabularyScores.push(speech.ttr_analysis.ttr * 100);
-          }
-          if (speech.logical_flow) {
-            acc.speechMetrics.logicalFlowScores.push(speech.logical_flow.score);
-          }
-          if (typeof speech.filler_percentage === "number") {
-            acc.speechMetrics.fillerPercentages.push(speech.filler_percentage);
-          }
-        } catch (err) {
-          console.warn("Failed to parse speech data:", err);
-        }
+      if (speech?.ttr_analysis?.ttr) accumulator.vocabScores.push(speech.ttr_analysis.ttr * 100);
+      if (speech?.logical_flow?.score) accumulator.flowScores.push(speech.logical_flow.score);
+      if (typeof speech?.filler_percentage === "number") accumulator.fillerScores.push(speech.filler_percentage);
+    });
 
-        return acc;
-      },
-      {
-        totalSessions: 0,
-        totalDuration: 0,
-        averageEmotions: [],
-        averageGazeDirections: [],
-        speechMetrics: {
-          vocabularyScores: [],
-          logicalFlowScores: [],
-          fillerPercentages: [],
-        },
-      }
-    );
-
-    const getAverage = (arr: number[]) =>
+    const avg = (arr: number[]) =>
       arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-    aggregated.averageEmotions = aggregated.averageEmotions
-      .map((e) => ({
-        emotion: e.emotion,
-        percentage: (e.percentage / (e.count || 1)) * 100,
+    const averageEmotions = Object.entries(accumulator.emotions)
+      .map(([emotion, { sum, count }]) => ({
+        emotion,
+        percentage: (sum / count) * 100,
       }))
       .sort((a, b) => b.percentage - a.percentage)
       .slice(0, 5);
 
-    aggregated.averageGazeDirections = aggregated.averageGazeDirections
-      .map((g) => ({
-        direction: g.direction,
-        percentage: (g.percentage / aggregated.totalSessions) * 100,
-      }))
-      .sort((a, b) => b.percentage - a.percentage);
+    const averageGazeDirections = Object.entries(accumulator.gaze).map(
+      ([direction, count]) => ({
+        direction,
+        percentage: (count / accumulator.totalSessions) * 100,
+      })
+    );
 
     setAnalytics({
-      totalSessions: aggregated.totalSessions,
-      totalDuration: aggregated.totalDuration,
-      averageEmotions: aggregated.averageEmotions,
-      averageGazeDirections: aggregated.averageGazeDirections,
-      averageVocabularyScore: getAverage(aggregated.speechMetrics.vocabularyScores),
-      averageLogicalFlow: getAverage(aggregated.speechMetrics.logicalFlowScores),
-      averageFillerWords: getAverage(aggregated.speechMetrics.fillerPercentages),
+      totalSessions: accumulator.totalSessions,
+      totalDuration: accumulator.totalDuration,
+      averageSessionDuration: accumulator.totalSessions
+        ? accumulator.totalDuration / accumulator.totalSessions
+        : 0,
+      averageEmotions,
+      averageGazeDirections,
+      averageVocabularyScore: avg(accumulator.vocabScores),
+      averageLogicalFlow: avg(accumulator.flowScores),
+      averageFillerWords: avg(accumulator.fillerScores),
     });
   }, []);
 
-  const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor((seconds % 3600) / 60);
+    const hrs = Math.floor(seconds / 3600);
+    return `${hrs}h ${mins}m`;
   };
 
   return (
-    <main className="container py-12 space-y-12">
+    <main className="container py-12 space-y-12 text-white">
       <div className="text-center space-y-3">
         <motion.h1
           className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-violet-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent"
@@ -184,152 +143,131 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Summary Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
           {
             title: "Practice Sessions 📊",
             value: analytics.totalSessions,
-            subtitle: "Total recorded sessions",
+            subtitle: "Total recordings",
           },
           {
             title: "Total Time ⏱️",
             value: formatDuration(analytics.totalDuration),
-            subtitle: "Time invested in practice",
+            subtitle: "Time spent speaking",
+          },
+          {
+            title: "Avg. Duration ⌛",
+            value: formatDuration(analytics.averageSessionDuration),
+            subtitle: "Per session",
           },
           {
             title: "Flow Score 🌊",
             value: `${analytics.averageLogicalFlow.toFixed(1)}%`,
             subtitle: "Speech coherence",
           },
-        ].map((card, idx) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1, duration: 0.6 }}
+        ].map((stat, i) => (
+          <Card
+            key={stat.title}
+            className="bg-gradient-to-br from-gray-800 via-gray-900 to-black border border-white/10 shadow-lg"
           >
-            <Card className="bg-gradient-to-br from-[#1f2937]/60 to-[#111827]/80 border border-white/10 text-white shadow-lg hover:shadow-xl transition">
-              <CardHeader>
-                <CardTitle className="text-center text-lg font-semibold">{card.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="text-3xl font-bold">{card.value}</div>
-                <p className="text-sm text-muted-foreground">{card.subtitle}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
+            <CardHeader>
+              <CardTitle className="text-center">{stat.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <div className="text-3xl font-bold">{stat.value}</div>
+              <p className="text-sm text-muted-foreground">{stat.subtitle}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Emotions */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
-          <CardHeader>
-            <CardTitle className="flex justify-center gap-2">Emotional Expression 😊</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {analytics.averageEmotions.map((emotion) => (
-              <div key={emotion.emotion} className="space-y-1.5">
-                <div className="flex justify-between text-sm font-medium">
-                  <span className="capitalize">{emotion.emotion}</span>
-                  <span>{emotion.percentage.toFixed(1)}%</span>
-                </div>
-                <Progress value={emotion.percentage} className="h-2" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Gaze Patterns */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
-          <CardHeader>
-            <CardTitle className="flex justify-center gap-2">Gaze Patterns 👀</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics.averageGazeDirections}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="direction" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="percentage" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Radial Score */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
-          <CardHeader>
-            <CardTitle className="flex justify-center gap-2">Speech Quality 🎯</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                innerRadius="30%"
-                outerRadius="100%"
-                data={[
-                  {
-                    name: "Vocabulary",
-                    value: analytics.averageVocabularyScore,
-                    fill: "hsl(var(--primary))",
-                  },
-                  {
-                    name: "Flow",
-                    value: analytics.averageLogicalFlow,
-                    fill: "hsl(var(--primary) / 0.7)",
-                  },
-                ]}
-                startAngle={180}
-                endAngle={0}
-              >
-                <PolarRadiusAxis type="number" domain={[0, 100]} />
-                <RadialBar
-                  background
-                  dataKey="value"
-                  cornerRadius={15}
-                  label={{ fill: "#fff", position: "insideStart" }}
-                />
-                <Tooltip />
-              </RadialBarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Insights */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-md text-white">
-          <CardHeader>
-            <CardTitle className="flex justify-center gap-2">Insights 💡</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            {[
-              {
-                title: "Emotional Range",
-                message:
-                  "You're showing a healthy mix of emotions — try to improve the pacing between transitions.",
-              },
-              {
-                title: "Gaze Engagement",
-                message:
-                  "Try distributing your gaze evenly and confidently — aim for natural movement.",
-              },
-              {
-                title: "Logical Flow",
-                message:
-                  "Solid coherence! Focus on smooth transitions to elevate your storytelling.",
-              },
-            ].map((insight) => (
-              <div
-                key={insight.title}
-                className="p-4 bg-primary/10 rounded-lg border border-white/10"
-              >
-                <h3 className="font-semibold mb-1">{insight.title}</h3>
-                <p className="text-muted-foreground">{insight.message}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      {/* Speech Scores */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {[
+          {
+            title: "Vocabulary 🧠",
+            value: `${analytics.averageVocabularyScore.toFixed(1)}%`,
+          },
+          {
+            title: "Logical Flow 🧩",
+            value: `${analytics.averageLogicalFlow.toFixed(1)}%`,
+          },
+          {
+            title: "Filler Words 🚫",
+            value: `${analytics.averageFillerWords.toFixed(1)}%`,
+          },
+        ].map((metric) => (
+          <Card key={metric.title} className="bg-white/5 border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-center">{metric.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center text-3xl font-bold">
+              {metric.value}
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* Emotions */}
+      <Card className="bg-white/5 border border-white/10">
+        <CardHeader>
+          <CardTitle className="text-center">Top Emotions 😊</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {analytics.averageEmotions.map((e) => (
+            <div key={e.emotion}>
+              <div className="flex justify-between text-sm">
+                <span className="capitalize">{e.emotion}</span>
+                <span>{e.percentage.toFixed(1)}%</span>
+              </div>
+              <Progress value={e.percentage} className="h-2" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Gaze */}
+      <Card className="bg-white/5 border border-white/10">
+        <CardHeader>
+          <CardTitle className="text-center">Gaze Engagement 👀</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={analytics.averageGazeDirections}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="direction" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="percentage" fill="#0ea5e9" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Insights */}
+      <Card className="bg-white/5 border border-white/10">
+        <CardHeader>
+          <CardTitle className="text-center">Personalized Tips 💡</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          {[
+            analytics.averageFillerWords > 15
+              ? "Try to reduce filler words for better clarity."
+              : "Excellent control over filler words! 👌",
+            analytics.averageVocabularyScore < 40
+              ? "Use more diverse vocabulary to sound sharper."
+              : "Great vocabulary range! 🔥",
+            analytics.averageLogicalFlow < 50
+              ? "Improve transitions between points."
+              : "Smooth flow of ideas. Keep it up! 💫",
+          ].map((tip, i) => (
+            <div key={i} className="p-3 bg-primary/10 rounded-md">
+              {tip}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </main>
   );
 }

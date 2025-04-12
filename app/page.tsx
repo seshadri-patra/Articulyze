@@ -7,11 +7,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardContent,
 } from "@/components/ui/card";
 import { useState } from "react";
 import Footer from "@/components/footer";
 import WhyArticulyze from "@/components/WhyArticulyze";
-import UseCases from "@/components/UseCases"; // <- Optional: include if you added it
+import UseCases from "@/components/UseCases";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -76,7 +77,6 @@ export default function LandingPage() {
       hoverBg: "from-amber-400/40 to-orange-500/40",
     },
   ];
-  
 
   return (
     <motion.main
@@ -114,13 +114,11 @@ export default function LandingPage() {
           >
             <Link href={section.href}>
               <Card className="relative group bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/40 shadow-lg hover:shadow-blue-500/30">
-                {/* Glow effect on hover */}
                 <motion.div
                   className={`absolute inset-0 rounded-xl bg-gradient-to-br blur-xl ${
                     hoveredIndex === index ? section.hoverBg : section.bg
                   } opacity-50 transition-opacity duration-500`}
                 />
-
                 <CardHeader className="relative z-10 py-10 text-center">
                   <motion.div
                     className="text-4xl"
@@ -136,14 +134,12 @@ export default function LandingPage() {
                   >
                     {section.icon}
                   </motion.div>
-
                   <CardTitle className="text-xl font-bold mt-4">
                     {section.title}
                   </CardTitle>
                   <CardDescription className="text-sm text-gray-300 mt-2">
                     {section.description}
                   </CardDescription>
-
                   <motion.div
                     className="h-8 flex items-center justify-center mt-3"
                     initial="rest"
@@ -173,9 +169,83 @@ export default function LandingPage() {
         ))}
       </motion.div>
 
-      {/* Sections */}
+
       <WhyArticulyze />
-      <UseCases /> {/* If you created it. Optional */}
+      <UseCases />
+              {/* Sample Report Preview Section */}
+      <section className="mt-24 w-full max-w-6xl mx-auto px-4 text-white">
+        <div className="text-center mb-10 space-y-2">
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 via-cyan-400 to-blue-500 text-transparent bg-clip-text">
+            Sample Report Preview 📋
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+            See the kind of insights you'll get after practicing with Articulyze.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Stats Card */}
+          <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Overview 📊</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-sm text-muted-foreground">
+              <p><strong>Total Words:</strong> 213</p>
+              <p><strong>Unique Words:</strong> 74</p>
+              <p><strong>Duration:</strong> 01m 48s</p>
+              <p><strong>Logical Flow:</strong> 89%</p>
+              <p><strong>Filler Words:</strong> 4.3%</p>
+            </CardContent>
+          </Card>
+
+          {/* Emotions Card */}
+          <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Emotions 🎭</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { emotion: "Happy", percentage: 42 },
+                { emotion: "Neutral", percentage: 38 },
+                { emotion: "Surprised", percentage: 20 },
+              ].map((e) => (
+                <div key={e.emotion}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>{e.emotion}</span>
+                    <span>{e.percentage}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${e.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Gaze Card */}
+          <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Gaze Direction 👀</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p><strong>Looking Forward:</strong> 67%</p>
+              <p><strong>Looking Down:</strong> 21%</p>
+              <p><strong>Looking Away:</strong> 12%</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center mt-10">
+          <Link href="/practice">
+            <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:scale-105 transition">
+              🚀 Try It Yourself
+            </button>
+          </Link>
+        </div>
+      </section>
       <Footer />
     </motion.main>
   );

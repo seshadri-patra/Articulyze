@@ -99,12 +99,9 @@ const pulseVariants = {
     },
   },
 };
-
-// Helper functions for analysis
 const getTopEmotions = (
   emotionsData: Array<{ timestamp: number; emotions: Emotions }>
 ) => {
-  // Calculate average emotion values
   const emotionSums: { [key: string]: number } = {};
   const emotionCounts: { [key: string]: number } = {};
 
@@ -115,7 +112,6 @@ const getTopEmotions = (
     });
   });
 
-  // Calculate averages and sort
   const averageEmotions = Object.entries(emotionSums).map(([emotion, sum]) => ({
     emotion,
     average: sum / emotionCounts[emotion],
@@ -155,7 +151,6 @@ const getDominantGazeDirection = (
 
 export default function PracticePage() {
   const router = useRouter();
-  // Camera-related state
   const [isStreaming, setIsStreaming] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -177,7 +172,7 @@ export default function PracticePage() {
   });
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
 
-  // Recording analysis state
+
   const [recordingEmotions, setRecordingEmotions] = useState<
     Array<{ timestamp: number; emotions: Emotions }>
   >([]);
@@ -185,16 +180,12 @@ export default function PracticePage() {
     Array<{ timestamp: number; direction: string }>
   >([]);
   const [analysisReady, setAnalysisReady] = useState(false);
-
-  // Add refs for storing recording data
   const emotionsDataRef = useRef<
     Array<{ timestamp: number; emotions: Emotions }>
   >([]);
   const gazeDataRef = useRef<Array<{ timestamp: number; direction: string }>>(
     []
   );
-
-  // Camera-related refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -213,6 +204,9 @@ export default function PracticePage() {
   const [speechRate, setSpeechRate] = useState<number | null>(null);
   const [speed, setSpeed] = useState([0]); // Default to normal speed
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
   const [showPractice, setShowPractice] = useState(false);
   const totalQuestions = 6;
 
@@ -339,12 +333,50 @@ export default function PracticePage() {
     recognition?.stop();
   };
 
-  const handleModeSelect = (modeId: string) => {
+  const handleModeSelect = async(modeId: string) => {
     setSelectedMode(modeId);
+    await fetchQuestions(modeId);
   };
+  const fetchQuestions = async (modeId: string) => {
+    setLoadingQuestions(true);
+    try {
+      const res = await fetch("/api/generate-practice-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: modeId, count: 6 }),
+      });
+  
+      if (!res.ok) throw new Error("Failed to fetch questions");
+  
+      const data = await res.json();
+      setQuestions(data.questions);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+  
 
-  const handleStartPractice = () => {
-    setShowPractice(true);
+  const handleStartPractice = async () => {
+    if (!selectedMode) return;
+    setLoadingQuestions(true);
+    try {
+      const res = await fetch("/api/generate-practice-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: selectedMode }),
+      });
+  
+      const data = await res.json();
+      setQuestions(data.questions || []);
+      setShowPractice(true);
+      setCurrentQuestion(1);
+    } catch (err) {
+      console.error("Failed to load questions:", err);
+    } finally {
+      setLoadingQuestions(false);
+    }
   };
 
   const selectedModeData = selectedMode
@@ -365,7 +397,6 @@ export default function PracticePage() {
         setIsProcessing(false);
         return;
       }
-
       // Capture the current frame from video
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
@@ -1009,6 +1040,16 @@ export default function PracticePage() {
               transition={{ duration: 0.5 }}
               className="space-y-6"
             >
+              {questions.length > 0 && (
+  <div className="bg-muted/30 p-4 rounded-lg text-center shadow border border-white/10">
+    <p className="text-lg font-semibold text-primary mb-2">
+      Question {currentQuestion} of {totalQuestions}
+    </p>
+    <p className="text-base text-white">
+      {questions[currentQuestion - 1]}
+    </p>
+  </div>
+)}
               <Card className="border-2">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1059,6 +1100,13 @@ export default function PracticePage() {
                           display: isRecording ? "none" : "block",
                         }}
                       />
+                      {/* Teleprompter question overlay */}
+  {questions.length > 0 && (
+    <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-center px-4 py-2 rounded-lg max-w-lg text-sm sm:text-base font-medium tracking-wide z-20">
+      {questions[currentQuestion - 1]}
+    </div>
+  )}
+
                       {isRecording && (
                         <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -1067,7 +1115,6 @@ export default function PracticePage() {
                       )}
                     </div>
 
-                    {/* Camera and Recording Controls */}
                     <div className="flex justify-center gap-4">
                       {!isRecording && (
                         <Button
@@ -1078,6 +1125,18 @@ export default function PracticePage() {
                           {isStreaming ? "Stop Camera" : "Start Camera"}
                         </Button>
                       )}
+                      {questions.length > 0 && currentQuestion < totalQuestions && (
+  <div className="flex justify-center">
+    <Button
+      onClick={() => setCurrentQuestion((prev) => prev + 1)}
+      variant="secondary"
+      className="mt-4"
+    >
+      Next Question →
+    </Button>
+  </div>
+)}
+
 
                       {isStreaming && (
                         <Button

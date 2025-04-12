@@ -57,3 +57,52 @@
     @apply bg-background text-foreground;
   }
 }
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  video, audio {
+    display: none !important;
+  }
+
+  .container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  button, .cursor-pointer, .hover\:bg-muted\/50 {
+    display: none !important;
+  }
+}
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  video, button, .no-print {
+    display: none !important;
+  }
+}
