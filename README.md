@@ -1,4 +1,7 @@
 Articulyze
+
+
+
 Articulyze: Speak smarter with AI-powered feedback.
 Articulyze is a magical platform designed to turn your speech videos into insightful feedback through advanced AI models. Whether you're preparing for a job interview, perfecting your public speaking skills, or mastering your first date conversations, Articulyze analyses your speech, facial expressions, and engagement levels to offer valuable, personalised feedback.
 
